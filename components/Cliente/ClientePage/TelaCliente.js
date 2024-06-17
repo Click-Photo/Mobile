@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, Modal, TextInput, Alert } from 'react-native';
 import styles from './TelaClienteStyles';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '../../UserContext';
 import axios from 'axios';
 import { API_URL_MOBILE } from '@env';
