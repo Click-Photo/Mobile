@@ -1,22 +1,37 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, Modal, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, FlatList, Modal, Alert } from 'react-native';
 import SelectDropdown from 'react-native-select-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Ionicons } from '@expo/vector-icons';
-
+import axios from 'axios';
+import { API_URL_MOBILE } from '@env';
 import styles from './JobsFotografoStyles';
+import { useUser } from '../../UserContext';
 
 function Jobs({ navigation }) {
+  const { user } = useUser();
   const [selectedStatus, setSelectedStatus] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [jobData, setJobData] = useState([]);
 
-  const jobData = [
-    { id: 1, date: '20 DEZ. 2024', titleJob: 'TITULO POSTAGEM', icon: 'check', descJob: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', preco: 2500, status: 'Aceito' },
-    { id: 2, date: '20 DEZ. 2024', titleJob: 'TITULO POSTAGEM', icon: 'clock-o', descJob: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', preco: 2500, status: 'Pendente' },
-    { id: 3, date: '20 DEZ. 2024', titleJob: 'TITULO POSTAGEM', icon: 'times', descJob: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', preco: 2500, status: 'Negado' },
-    { id: 4, date: '20 DEZ. 2024', titleJob: 'TITULO POSTAGEM', icon: 'money', descJob: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', preco: 2500, status: 'Pago' },
-  ];
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const fetchJobs = async () => {
+    try {
+      const response = await axios.get(`${API_URL_MOBILE}/click/getJobsFotografo/${user.user.id}`);
+      if (response.status === 200) {
+        setJobData(response.data.jobs);
+      } else {
+        Alert.alert('Erro', 'Erro ao buscar jobs do fotógrafo');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar jobs do fotógrafo', error);
+      Alert.alert('Erro', 'Erro ao buscar jobs do fotógrafo');
+    }
+  };
 
   const handleStatusSelection = (status) => {
     setSelectedStatus(status);
@@ -25,16 +40,21 @@ function Jobs({ navigation }) {
   const renderFeedItem = ({ item }) => {
     let bgIcon;
 
-    if (item.icon === 'check') {
-      bgIcon = "#0B7E40";
-    } else if (item.icon === 'clock-o') {
-      bgIcon = '#5F5F5F';
-    } else if (item.icon === 'times') {
-      bgIcon = "#7E0B20";
-    } else if (item.icon === 'money') {
-      bgIcon = "#225CB4";
-    } else {
-      bgIcon = "#7E0B20";
+    switch (item.status) {
+      case 'Aceito':
+        bgIcon = "#0B7E40";
+        break;
+      case 'Pendente':
+        bgIcon = '#5F5F5F';
+        break;
+      case 'Negado':
+        bgIcon = "#7E0B20";
+        break;
+      case 'Pago':
+        bgIcon = "#225CB4";
+        break;
+      default:
+        bgIcon = "#7E0B20";
     }
 
     return (
@@ -44,17 +64,17 @@ function Jobs({ navigation }) {
       }}>
         <View style={styles.headerJob}>
           <View style={styles.infoJob}>
-            <Text style={styles.dateJob}>{item.date}</Text>
-            <Text style={styles.titleJob}>{item.titleJob}</Text>
+            <Text style={styles.dateJob}>{new Date(item.dataJob).toLocaleDateString()}</Text>
+            <Text style={styles.titleJob}>{item.titulo}</Text>
           </View>
           <View style={[styles.iconContainer, { backgroundColor: bgIcon }]}>
-            <Icon name={item.icon} color='white' size={20} />
+            <Icon name="check" color='white' size={20} />
           </View>
         </View>
 
         <View style={styles.descJob}>
           <Text style={styles.descJobText}>
-            {item.descJob}
+            {item.descricao}
           </Text>
         </View>
 
@@ -118,16 +138,16 @@ function Jobs({ navigation }) {
               <View style={styles.modalHeaderContaianer}>
                 <View>
                   <Text style={styles.modalDateTitle}>DATA DO JOB</Text>
-                  <Text style={styles.dateJob}>{selectedJob.date}</Text>
-                  <Text style={styles.modalTitle}>{selectedJob.titleJob}</Text>
+                  <Text style={styles.dateJob}>{new Date(selectedJob.dataJob).toLocaleDateString()}</Text>
+                  <Text style={styles.modalTitle}>{selectedJob.titulo}</Text>
                 </View>
                 <Text style={styles.modalDate}>{selectedJob.status}</Text>
               </View>
 
-              <Text style={styles.modalDescription}>{selectedJob.descJob}</Text>
+              <Text style={styles.modalDescription}>{selectedJob.descricao}</Text>
               <View style={styles.localContainer}>
                 <Text style={styles.localTitle}>LOCAL</Text>
-                <Text style={styles.localText}>AV. PINHEIRO 2000</Text>
+                <Text style={styles.localText}>{selectedJob.local}</Text>
               </View>
 
               <View style={styles.precoContainer}>

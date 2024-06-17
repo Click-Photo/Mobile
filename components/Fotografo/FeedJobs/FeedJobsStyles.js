@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'space-between', 
     position: 'absolute',
-    bottom: -95,
+    bottom: -60,
     padding: 15
   },
   priceJob:{
@@ -121,7 +121,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#E1E1E1',
-    height: 70,
+    height: "100%",
+    maxHeight: 95,
     width: '100%',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -134,7 +135,8 @@ const styles = StyleSheet.create({
   },
   titleJob:{
     fontSize: 20, 
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    maxWidth: 220
   },
   iconContainer:{
     width: 30,

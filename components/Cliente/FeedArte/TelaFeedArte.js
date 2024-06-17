@@ -1,38 +1,80 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, FlatList, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Image, ScrollView, FlatList, Modal, Alert } from 'react-native';
 import Svg, { Path, ClipPath, Defs, Rect } from 'react-native-svg';
 import styles from './TelaFeedArteStyles';
+import { useUser } from '../../UserContext';
+import axios from 'axios';
+import { API_URL_MOBILE } from '@env';
+import Icon from 'react-native-vector-icons/FontAwesome';
+
+const randomPersonIcons = [
+  "user-circle",
+  "user",
+  "user-o",
+  "user-circle-o"
+];
+
+const getRandomPersonIcon = () => {
+  return randomPersonIcons[Math.floor(Math.random() * randomPersonIcons.length)];
+};
 
 const TelaFeedArte = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedArt, setSelectedArt] = useState(null);
+  const [sliderData, setSliderData] = useState([]);
+  const [feedData, setFeedData] = useState([]);
 
-  const sliderData = [
-    { id: 1, name: 'João Silva', image: require('../../../assets/photo1.png') },
-    { id: 2, name: 'Maria Souza', image: require('../../../assets/photo2.png') },
-    { id: 2, name: 'Maria Souza', image: require('../../../assets/photo2.png') },
-    { id: 2, name: 'Maria Souza', image: require('../../../assets/photo2.png') },
-    { id: 2, name: 'Maria Souza', image: require('../../../assets/photo2.png') },
-  ];
+  const { user } = useUser();
 
-  const feedData = [
-    { id: 1, name: 'Arte 1', perfilPhoto: require('../../../assets/photo1.png'), artist: 'Fotógrafo 1', image: require('../../../assets/arte1.png') },
-    { id: 2, name: 'Arte 2', artist: 'Fotógrafo 2', perfilPhoto: require('../../../assets/photo2.png'), image: require('../../../assets/arte1.png') },
-    { id: 3, name: 'Arte 3', artist: 'Fotógrafo 3', perfilPhoto: require('../../../assets/photo1.png'), image: require('../../../assets/arte1.png') },
-  ];
+  useEffect(() => {
+    fetchFotografos();
+    fetchPortfolio();
+  }, []);
+
+  const fetchFotografos = async () => {
+    try {
+      const response = await axios.post(`${API_URL_MOBILE}/click/visualizarFotografo`);
+      if (response.status === 200) {
+        setSliderData(response.data);
+      } else {
+        Alert.alert('Erro', 'Erro ao buscar fotógrafos');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar fotógrafos', error);
+      Alert.alert('Erro', 'Erro ao buscar fotógrafos');
+    }
+  };
+
+  const fetchPortfolio = async () => {
+    try {
+      const response = await axios.get(`${API_URL_MOBILE}/click/listarTodasFotos`);
+      if (response.status === 200) {
+        setFeedData(response.data);
+      } else {
+        Alert.alert('Erro', 'Erro ao buscar portfólio');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar portfólio', error);
+      Alert.alert('Erro', 'Erro ao buscar portfólio');
+    }
+  };
 
   const renderFeedItem = ({ item }) => (
     <TouchableOpacity style={styles.feedItem} onPress={() => {
       setSelectedArt(item);
       setModalVisible(true);
     }}>
-      <Image source={item.image} style={styles.feedItemImage} />
+      <Image source={{ uri: item.fotoUrl }} style={styles.feedItemImage} />
       
-      <Text style={styles.feedItemName}>{item.name}</Text>
+      <Text style={styles.feedItemName}>{item.descricao}</Text>
       <View style={[styles.feedItemArtist, { width: '100%', justifyContent: 'space-between' }]}>
         <View style={styles.feedItemArtist}>
-          <Image source={item.perfilPhoto} style={styles.artistImage} />
-          <Text style={styles.artistName}>{item.artist}</Text>
+          {item.perfilPhoto ? (
+            <Image source={{ uri: item.perfilPhoto }} style={styles.artistImage} />
+          ) : (
+            <Icon name={getRandomPersonIcon()} size={25} color="gray" style={styles.artistImage} />
+          )}
+          <Text style={styles.artistName}>{item.fotografoNome}</Text>
         </View>
          <TouchableOpacity style={styles.feedItemButton} onPress={() => {
            setSelectedArt(item);
@@ -63,7 +105,7 @@ const TelaFeedArte = ({ navigation }) => {
                   />
                 </Svg>
             </TouchableOpacity>
-            <Text style={styles.greeting}>Olá, Ana Fernandes</Text>
+            <Text style={styles.greeting}>Olá, { user.user.nome }</Text>
             
           </View>
           <TouchableOpacity onPress={() =>  navigation.navigate('TelaCliente')}>
@@ -82,19 +124,22 @@ const TelaFeedArte = ({ navigation }) => {
           showsHorizontalScrollIndicator={false} 
           renderItem={({ item }) => (
             <TouchableOpacity key={item.id} style={styles.sliderItem}>
-              <Image source={item.image} style={styles.sliderItemImage} />
-              <Text style={styles.sliderItemName}>{item.name}</Text>
+              {item.perfilPhoto ? (
+                <Image source={{ uri: item.perfilPhoto }} style={styles.sliderItemImage} />
+              ) : (
+                <Icon name={getRandomPersonIcon()} size={40} color="white" style={styles.sliderItemImage} />
+              )}
+              <Text style={styles.sliderItemName}>{item.nome}</Text>
             </TouchableOpacity>
           )}
           keyExtractor={item => item.id.toString()}
           style={styles.sliderContainer}
         />
 
-
         <FlatList
           data={feedData}
           renderItem={renderFeedItem}
-          keyExtractor={item => item.id.toString()}
+          keyExtractor={item => item.portfolioId.toString()}
           contentContainerStyle={[styles.feedContainer, { paddingBottom: 300 }]} 
         />
       </View>
@@ -120,18 +165,22 @@ const TelaFeedArte = ({ navigation }) => {
             >
               <Text style={styles.modalCloseButtonText}>X</Text>
             </TouchableOpacity>
-            <Image source={selectedArt ? selectedArt.image : null} style={styles.modalImage} />
-            <Text style={styles.modalTitle}>{selectedArt ? selectedArt.name : ''}</Text>
+            <Image source={selectedArt ? { uri: selectedArt.fotoUrl } : null} style={styles.modalImage} />
+            <Text style={styles.modalTitle}>{selectedArt ? selectedArt.descricao : ''}</Text>
             <View style={styles.modalArtist}>
-              <Image source={require('../../../assets/photo1.png')} style={styles.artistImage} />
-              <Text style={styles.artistName}>{selectedArt ? selectedArt.artist : ''}</Text>
+              {selectedArt && selectedArt.perfilPhoto ? (
+                <Image source={{ uri: selectedArt.perfilPhoto }} style={styles.artistImage} />
+              ) : (
+                <Icon name={getRandomPersonIcon()} size={25} color="gray" style={styles.artistImage} />
+              )}
+              <Text style={styles.artistName}>{selectedArt ? selectedArt.fotografoNome : ''}</Text>
             </View>
             <TouchableOpacity
               style={styles.modalSeePerfilButton}
               onPress={() => {
                 setModalVisible(false);
                 setSelectedArt(null);
-               navigation.navigate('TelaFotografo', { artistId: selectedArt.id, perfilPhoto: selectedArt.perfilPhoto })
+                navigation.navigate('TelaFotografo', { artistId: selectedArt.fotografoId, perfilPhoto: selectedArt.perfilPhoto });
               }}
             >
               <Text style={styles.modalSeePerfilButtonText}>VER PERFIL</Text>

@@ -136,6 +136,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 10
   },
+  profileIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#e0e0e0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: "gray",
+    borderRadius: 50,
+    padding: 10,
+    marginLeft: -20
+  },
+  finalizeButton: {
+    backgroundColor: 'green',
+    padding: 10,
+    borderRadius: 5,
+    margin: 5,
+  },
+  cancelButton: {
+    backgroundColor: 'red',
+    padding: 10,
+    borderRadius: 5,
+    margin: 5,
+  },
 });
 
 export default styles;

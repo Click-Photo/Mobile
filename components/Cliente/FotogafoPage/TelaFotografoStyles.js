@@ -95,11 +95,14 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginTop: 50,
   },
-  imagePortfolio:{
+  imagePortfolio: {
     borderWidth: 2,
     borderColor: "#fff",
-    borderRadius: 20, 
-    marginBottom: 12
+    borderRadius: 20,
+    marginBottom: 12,
+    width: "100%",
+    maxWidth: 150,
+    height: 150,
   },
   contactButtonModal: {
     width: 286,

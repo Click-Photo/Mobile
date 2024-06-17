@@ -1,53 +1,37 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, FlatList, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import axios from 'axios';
+import { API_URL_MOBILE } from '@env';
 import styles from "./AvaliacaoClienteStyles";
+import { useUser } from '../../UserContext';
 
-const data = [
-  {
-    id: '1',
-    date: '18 DEZ. 2024',
-    amount: '2.460',
-    photographerName: 'Nome Do Cliente',
-    rating: 4.5,
-    profileImage: require('../../../assets/perfil.png')
-  },
-  {
-    id: '2',
-    date: '18 DEZ. 2024',
-    amount: '2.460',
-    photographerName: 'Nome Do Cliente',
-    rating: 4.5,
-    profileImage: require('../../../assets/photo1.png')
+const renderStarIcons = (rating) => {
+  const filledStars = Math.floor(rating);
+  const halfStar = rating % 1 !== 0;
+  const starIcons = [];
+
+  for (let i = 0; i < filledStars; i++) {
+    starIcons.push(<Icon key={i} name="star" size={15} color="#000" />);
   }
-];
+  if (halfStar) {
+    starIcons.push(<Icon key="half" name="star-half" size={15} color="#000" />);
+  }
 
-const ProposalCard = ({ item, navigation }) => {
-  const [rating, setRating] = useState(item.rating);
+  const remainingStars = 5 - filledStars - (halfStar ? 1 : 0);
+  for (let i = 0; i < remainingStars; i++) {
+    starIcons.push(<Icon key={`empty-${i}`} name="star" size={15} color="gray" />);
+  }
+
+  return starIcons;
+};
+
+const ProposalCard = ({ item, onSubmitRating }) => {
+  const [rating, setRating] = useState(item.rating || 0);
   
   const handleRating = (newRating) => {
     setRating(newRating);
-  };
-
-  const renderStarIcons = () => {
-    const filledStars = Math.floor(rating);
-    const halfStar = rating % 1 !== 0;
-    const starIcons = [];
-
-    for (let i = 0; i < filledStars; i++) {
-      starIcons.push(<Icon key={i} name="star" size={15} color="#000" />);
-    }
-    if (halfStar) {
-      starIcons.push(<Icon key="half" name="star-half" size={15} color="#000" />);
-    }
-
-    const remainingStars = 5 - filledStars - (halfStar ? 1 : 0);
-    for (let i = 0; i < remainingStars; i++) {
-      starIcons.push(<Icon key={`empty-${i}`} name="star" size={15} color="gray" />);
-    }
-
-    return starIcons;
   };
 
   const renderRatingButtons = () => {
@@ -67,17 +51,20 @@ const ProposalCard = ({ item, navigation }) => {
       <View style={styles.containerDate}>
         <View style={styles.wrapperDate}>
           <Text style={styles.dateTitle}>DATA DO JOB</Text>
-          <Text style={styles.date}>{item.date}</Text>
+          <Text style={styles.date}>{new Date(item.dataJob).toLocaleDateString()}</Text>
         </View>
-        <Text style={styles.amount}>R$ {item.amount}</Text>
+        <Text style={styles.amount}>R$ {item.preco}</Text>
       </View>
       <View style={styles.profileContainer}>
         <View style={styles.profileContainerWrapper}>
-          <Image source={item.profileImage} style={styles.profileImage} />
+          {item.profileImage ? (
+            <Image source={{ uri: item.profileImage }} style={styles.profileImage} />
+          ) : (
+            <Icon name="user" size={40} color="gray" style={styles.profileIcon} />
+          )}
           <View style={styles.wrapperTitlePhoto}>
-            <Text style={styles.photographerName}>{item.photographerName}</Text>
-            <TouchableOpacity style={styles.profileButton}
-            onPress={() => navigation.navigate("TelaCliente")}>
+            <Text style={styles.photographerName}>{item.nomeCliente}</Text>
+            <TouchableOpacity style={styles.profileButton}>
               <Text style={styles.profileButtonText}>Ver Perfil</Text>
             </TouchableOpacity>
           </View>
@@ -89,6 +76,7 @@ const ProposalCard = ({ item, navigation }) => {
 
       <TouchableOpacity
         style={styles.modalSeePerfilButton}
+        onPress={() => onSubmitRating(item.jobId, rating)}
       >
         <Text style={styles.modalSeePerfilButtonText}>ENVIAR AVALIACAO</Text>
       </TouchableOpacity>
@@ -96,7 +84,45 @@ const ProposalCard = ({ item, navigation }) => {
   );
 };
 
-const ProposalsScreen = ({ navigation }) => {
+const AvaliacoesScreen = ({ route, navigation }) => {
+  const [avaliacoes, setAvaliacoes] = useState([]);
+  const { user } = useUser();
+
+  useEffect(() => {
+    fetchAvaliacoes();
+  }, []);
+
+  const fetchAvaliacoes = async () => {
+    try {
+      const response = await axios.get(`${API_URL_MOBILE}/click/avaliacoesPendentesFotografo/${user.user.id}`);
+      if (response.status === 200) {
+        setAvaliacoes(response.data);
+      } else {
+        Alert.alert('Erro', 'Erro ao buscar avaliações pendentes');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar avaliações pendentes', error);
+      Alert.alert('Erro', 'Erro ao buscar avaliações pendentes');
+    }
+  };
+
+  const enviarAvaliacao = async (jobId, rating) => {
+    try {
+      const response = await axios.post(`${API_URL_MOBILE}/click/avaliarCliente/${jobId}`, {
+        notaFotografo: rating
+      });
+      if (response.status === 200) {
+        Alert.alert('Sucesso', 'Avaliação enviada com sucesso');
+        fetchAvaliacoes();
+      } else {
+        Alert.alert('Erro', 'Erro ao enviar avaliação');
+      }
+    } catch (error) {
+      console.error('Erro ao enviar avaliação', error);
+      Alert.alert('Erro', 'Erro ao enviar avaliação');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -104,12 +130,17 @@ const ProposalsScreen = ({ navigation }) => {
       </TouchableOpacity>
       <Text style={styles.title}>AVALIAÇÕES</Text>
       <FlatList
-        data={data}
-        renderItem={({ item }) => <ProposalCard item={item} navigation={navigation} />}
-        keyExtractor={item => item.id}
+        data={avaliacoes}
+        renderItem={({ item }) => (
+          <ProposalCard 
+            item={item} 
+            onSubmitRating={enviarAvaliacao} 
+          />
+        )}
+        keyExtractor={item => item.id.toString()}
       />
     </View>
   );
 };
 
-export default ProposalsScreen;
+export default AvaliacoesScreen;

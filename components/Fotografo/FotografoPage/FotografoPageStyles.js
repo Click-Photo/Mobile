@@ -13,7 +13,10 @@ const styles = StyleSheet.create({
     color: 'white'
   },
   header: {
-    margin: 40
+    margin: 40,
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between"
   },
   contentContainer:{
     flex: 1,

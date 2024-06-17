@@ -1,14 +1,47 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, Alert } from 'react-native';
 import Svg, { Path, ClipPath, Rect } from 'react-native-svg';
 import styles from './CadastroStyles';
+import { API_URL_MOBILE } from '@env';
+import axios from 'axios';
 
 function Cadastro({ navigation }) {
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [cpf, setCpf] = useState('');
   const [telefone, setTelefone] = useState('');
   const [cep, setCep] = useState('');
   const [senha, setSenha] = useState('');
+  const [role, setRole] = useState('cliente');
+
+  const toggleRole = (selectedRole) => {
+    setRole(selectedRole);
+  };
+
+  const handleRegister = async () => {
+    if (!nome || !email || !cpf || !telefone || !cep || !senha) {
+      Alert.alert("Erro", "Por favor, preencha todos os campos.");
+      return;
+    }
+    const url = role === 'fotografo' ? `${API_URL_MOBILE}/click/cadastroFotografo` : `${API_URL_MOBILE}/click/cadastroCliente`;
+    const userData = { nome, email, CPF: cpf, telefone, CEP: cep, senha };
+
+    try {
+      const response = await axios.post(url, userData);
+      if (response.status === 201) {
+        Alert.alert("Sucesso", "Cadastro realizado com sucesso, por favor faça login.");
+        navigation.navigate('Login');
+      } else {
+        Alert.alert("Erro no cadastro", response.data.message);
+      }
+    } catch (error) {
+      const errorMessage = error.response ? error.response.data.message : error.message;
+      alert("Erro no cadastro", errorMessage);
+    }
+
+    
+    
+  };
 
   return (
     <View style={styles.container}>
@@ -40,6 +73,18 @@ function Cadastro({ navigation }) {
             fill="#898989"
           />
         </Svg>
+        <TextInput
+          style={styles.input}
+          placeholder="Nome"
+          placeholderTextColor="#898989"
+          value={nome}
+          onChangeText={setNome}
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <TextInput style={{ fontSize: 20, color: "#898989", marginRight: 8}}>@</TextInput>
+
         <TextInput
           style={styles.input}
           placeholder="Email"
@@ -90,7 +135,7 @@ function Cadastro({ navigation }) {
           </Svg>
         <TextInput
           style={styles.input}
-          placeholder="CEP"
+          placeholder="Endereço"
           placeholderTextColor="#898989"
           value={cep}
           onChangeText={setCep}
@@ -114,6 +159,21 @@ function Cadastro({ navigation }) {
         />
       </View>
 
+      <View style={styles.switchContainer}>
+        <TouchableOpacity
+          style={[styles.buttonSwicth, role === 'cliente' ? styles.active : styles.inactive]}
+          onPress={() => toggleRole('cliente')}
+        >
+          <Text style={[role === 'cliente' ? styles.activeBtn : styles.inactiveBtn]}>Cliente</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.buttonSwicth, role === 'fotografo' ? styles.active : styles.inactive]}
+          onPress={() => toggleRole('fotografo')}
+        >
+          <Text style={[role === 'fotografo' ? styles.activeBtn : styles.inactiveBtn]}>Fotógrafo</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={[styles.linkContainer, {marginBottom: 20}]}>
         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
           <Text style={styles.linkText}>Fazer Login</Text>
@@ -122,7 +182,7 @@ function Cadastro({ navigation }) {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('TelaFeedJobs')}
+        onPress={() => handleRegister()}
       >
         <Text style={styles.buttonText}>CADASTRAR</Text>
       </TouchableOpacity>

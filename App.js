@@ -21,37 +21,40 @@ import JobsInteresse from './components/Fotografo/JobsInteresse/JobsInteresse';
 import ClientePageFotografo from './components/Fotografo/ClientePage/ClientePage';
 import AvaliacaoFotografo from './components/Fotografo/AvaliacaoCliente/AvaliacaoCliente';
 
+import { UserProvider } from './components/UserContext';
+
 
 const Stack = createStackNavigator();
 
 function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerMode: 'none' }}>
-      
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Cadastro" component={CadastroScreen} />
+    <UserProvider>
+        <NavigationContainer>
+            <Stack.Navigator screenOptions={{ headerMode: 'none' }}>
+            
+              <Stack.Screen name="Login" component={LoginScreen} />
+              <Stack.Screen name="Cadastro" component={CadastroScreen} />
 
-        <Stack.Screen name="TelaAvaliacaoCliente" component={AvaliacaoFotografo} />
-        <Stack.Screen name="TelaFotografoPage" component={FotografoPages} />
-        <Stack.Screen name="TelaAvaliacaoFotografo" component={AvaliacaoCliente} />
-        <Stack.Screen name="TelaCliente" component={TelaCliente} />
-        
-        
+              <Stack.Screen name="TelaAvaliacaoCliente" component={AvaliacaoFotografo} />
+              <Stack.Screen name="TelaFotografoPage" component={FotografoPages} />
+              <Stack.Screen name="TelaAvaliacaoFotografo" component={AvaliacaoCliente} />
+              <Stack.Screen name="TelaCliente" component={TelaCliente} />
 
-        <Stack.Screen name="TelaFeedJobs" component={FeedJobs} />
-        <Stack.Screen name="TelaClienteFotografo" component={ClientePageFotografo} />
-        <Stack.Screen name="TelaCreateJob" component={TelaCreateJob}/>
-        
-        <Stack.Screen name="TelaJobsInteresse" component={JobsInteresse} />
-        <Stack.Screen name="TelaJobsFotografo" component={JobsFotografo} />
+              <Stack.Screen name="TelaFeedJobs" component={FeedJobs} />
+              <Stack.Screen name="TelaClienteFotografo" component={ClientePageFotografo} />
+              <Stack.Screen name="TelaCreateJob" component={TelaCreateJob}/>
+              
+              <Stack.Screen name="TelaJobsInteresse" component={JobsInteresse} />
+              <Stack.Screen name="TelaJobsFotografo" component={JobsFotografo} />
 
-        <Stack.Screen name="TelaPropostaCliente" component={ProposalClient} />
-        <Stack.Screen name="TelaFeedArte" component={TelaFeedArte} />
-        <Stack.Screen name="TelaFotografo" component={TelaFotografo} />
-        <Stack.Screen name="TelaJobsCliente" component={JobsCliente} />
-      </Stack.Navigator>
-    </NavigationContainer>
+              <Stack.Screen name="TelaPropostaCliente" component={ProposalClient} />
+              <Stack.Screen name="TelaFeedArte" component={TelaFeedArte} />
+              <Stack.Screen name="TelaFotografo" component={TelaFotografo} />
+              <Stack.Screen name="TelaJobsCliente" component={JobsCliente} />
+            </Stack.Navigator>
+        </NavigationContainer>
+    </UserProvider>
+    
   );
 }
 

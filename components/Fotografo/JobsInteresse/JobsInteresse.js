@@ -1,22 +1,35 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, Modal, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, FlatList, Modal, Alert } from 'react-native';
+import axios from 'axios';
 import SelectDropdown from 'react-native-select-dropdown';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Ionicons } from '@expo/vector-icons';
 import IconTwo from 'react-native-vector-icons/MaterialIcons';
 
+import { useUser } from '../../UserContext';
+import { API_URL_MOBILE } from '@env';
 import styles from './JobsInteresseStyles';
 
 function Jobs({ navigation }) {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
-  const [jobData, setJobData] = useState([
-      { id: 1, date: '20 DEZ. 2024', titleJob: 'TITULO POSTAGEM', icon: 'check', descJob: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', preco: 2500, status: 'Aceito', liked: false },
-      { id: 2, date: '20 DEZ. 2024', titleJob: 'TITULO POSTAGEM', icon: 'clock-o', descJob: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', preco: 2500, status: 'Pendente', liked: false },
-      { id: 3, date: '20 DEZ. 2024', titleJob: 'TITULO POSTAGEM', icon: 'times', descJob: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', preco: 2500, status: 'Negado', liked: false },
-      { id: 4, date: '20 DEZ. 2024', titleJob: 'TITULO POSTAGEM', icon: 'money', descJob: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', preco: 2500, status: 'Pago', liked: false }
-    ]);
+  const [jobData, setJobData] = useState([]);
+  
+  const { user } = useUser();
+
+  useEffect(() => {
+    fetchInteressesFotografo();
+  }, []);
+
+  const fetchInteressesFotografo = async () => {
+    try {
+      const response = await axios.get(`${API_URL_MOBILE}/click/getInteressesFotografo/${user.user.id}`);
+      setJobData(response.data);
+    } catch (error) {
+      console.error("Erro ao buscar interesses do fotógrafo", error);
+    }
+  };
 
   const toggleLike = (id) => {
     setJobData(currentJobs => 
@@ -38,26 +51,25 @@ function Jobs({ navigation }) {
       }}>
         <View style={styles.headerJob}>
           <View style={styles.infoJob}>
-            <Text style={styles.dateJob}>{item.date}</Text>
-            <Text style={styles.titleJob}>{item.titleJob}</Text>
+            <Text style={styles.dateJob}>{new Date(item.dataJob).toLocaleDateString()}</Text>
+            <Text style={styles.titleJob}>{item.titulo}</Text>
           </View>
 
-          <TouchableOpacity onPress={() => toggleLike(item.id)} style={styles.likeButton}>
+          {/* <TouchableOpacity onPress={() => toggleLike(item.id)} style={styles.likeButton}>
               <Icon name={item.liked ? "thumbs-up" : "thumbs-o-up"} size={20} color="black" />
               <Text style={styles.likeText}>Interesse</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
         </View>
 
         <View style={styles.localtionJob}>
           <IconTwo name="location-on" size={20} color="#000" />
-          <Text style={styles.localtionText}>AV. SANTOS GIUSTI 178</Text>
-          <Text style={styles.localtionProposal}>(20) PROPOSTAS</Text>
+          <Text style={styles.localtionText}>{item.local}</Text>
         </View>
 
         <View style={styles.descJob}>
           <Text style={styles.descJobText}>
-            {item.descJob}
+            {item.descricao}
           </Text>
         </View>
 
@@ -75,6 +87,7 @@ function Jobs({ navigation }) {
       </TouchableOpacity>
     );
   };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -120,16 +133,16 @@ function Jobs({ navigation }) {
               <View style={styles.modalHeaderContaianer}>
                 <View>
                   <Text style={styles.modalDateTitle}>DATA DO JOB</Text>
-                  <Text style={styles.dateJob}>{selectedJob.date}</Text>
-                  <Text style={styles.modalTitle}>{selectedJob.titleJob}</Text>
+                  <Text style={styles.dateJob}>{new Date(selectedJob.dataJob).toLocaleDateString()}</Text>
+                  <Text style={styles.modalTitle}>{selectedJob.titulo}</Text>
                 </View>
                 <Text style={styles.modalDate}>{selectedJob.status}</Text>
               </View>
 
-              <Text style={styles.modalDescription}>{selectedJob.descJob}</Text>
+              <Text style={styles.modalDescription}>{selectedJob.descricao}</Text>
               <View style={styles.localContainer}>
                 <Text style={styles.localTitle}>LOCAL</Text>
-                <Text style={styles.localText}>AV. PINHEIRO 2000</Text>
+                <Text style={styles.localText}>{selectedJob.local}</Text>
               </View>
 
               <View style={styles.precoContainer}>
@@ -138,12 +151,12 @@ function Jobs({ navigation }) {
                   <Text style={styles.modalPrice}>R$ {selectedJob.preco}</Text>
                 </View>
 
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   style={styles.propostasBtn}
                   onPress={() => {navigation.navigate('TelaPropostaCliente'), setModalVisible(false)}}
                 >
                   <Text style={styles.propostasBtnText}>CANCELAR</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
               
             </View>

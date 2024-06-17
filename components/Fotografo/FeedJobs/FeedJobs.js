@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, FlatList, Modal, Alert } from 'react-native';
+import axios from 'axios';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import IconTwo from 'react-native-vector-icons/MaterialIcons';
-import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path, ClipPath, Defs, Rect } from 'react-native-svg';
+import { useUser } from '../../UserContext';
+import { API_URL_MOBILE } from '@env';
 
 import styles from './FeedJobsStyles';
 
@@ -11,12 +13,59 @@ function Jobs({ navigation }) {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
-  const [jobData, setJobData] = useState([
-      { id: 1, date: '20 DEZ. 2024', titleJob: 'TITULO POSTAGEM', icon: 'check', descJob: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', preco: 2500, status: 'Aceito', liked: false },
-      { id: 2, date: '20 DEZ. 2024', titleJob: 'TITULO POSTAGEM', icon: 'clock-o', descJob: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', preco: 2500, status: 'Pendente', liked: false },
-      { id: 3, date: '20 DEZ. 2024', titleJob: 'TITULO POSTAGEM', icon: 'times', descJob: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', preco: 2500, status: 'Negado', liked: false },
-      { id: 4, date: '20 DEZ. 2024', titleJob: 'TITULO POSTAGEM', icon: 'money', descJob: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', preco: 2500, status: 'Pago', liked: false }
-    ]);
+  const [jobData, setJobData] = useState([]);
+  
+  const { user } = useUser();
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const fetchJobs = async () => {
+    try {
+      const response = await axios.post(`${API_URL_MOBILE}/click/visualizarJobs`);
+      setJobData(response.data);
+    } catch (error) {
+      console.error("Erro ao coletar informações sobre os jobs", error);
+    }
+  };
+
+  const handleCreateProposta = async () => {
+    try {
+      const response = await axios.post(`${API_URL_MOBILE}/click/criarProposta/${selectedJob.id}`, {
+        idFotografo: user.user.id,  
+        idCliente: selectedJob.idCliente
+      });
+
+      if (response.status === 200) {
+        Alert.alert('Sucesso', 'Proposta realizada com sucesso.');
+        setModalVisible(false);
+      } else {
+        Alert.alert('Erro', response.data.message);
+      }
+    } catch (error) {
+      console.error("Erro ao criar proposta", error);
+      Alert.alert('Erro', 'Erro ao criar a proposta.');
+    }
+  };
+
+  const handleMarkInterest = async (jobId) => {
+    try {
+      const response = await axios.post(`${API_URL_MOBILE}/click/marcarInteresse/${jobId}`, {
+        idFotografo: user.user.id
+      });
+
+      if (response.status === 201) {
+        Alert.alert('Sucesso', 'Interesse marcado com sucesso.');
+        toggleLike(jobId);
+      } else {
+        Alert.alert('Erro', response.data.message);
+      }
+    } catch (error) {
+      console.error("Erro ao marcar interesse", error);
+      Alert.alert('Erro', 'Erro ao marcar interesse.');
+    }
+  };
 
   const handleStatusSelection = (status) => {
     setSelectedStatus(status);
@@ -30,35 +79,41 @@ function Jobs({ navigation }) {
     );
   };
 
+  const truncateText = (text, maxLength) => {
+    if (text.length > maxLength) {
+      return text.substring(0, maxLength) + '...';
+    }
+    return text;
+  };
 
   const renderFeedItem = ({ item }) => {
     return (
       <TouchableOpacity style={styles.feedItem} onPress={() => {
+        console.log("Selected Job:", item); 
         setSelectedJob(item);
         setModalVisible(true);
       }}>
         <View style={styles.headerJob}>
           <View style={styles.infoJob}>
-            <Text style={styles.dateJob}>{item.date}</Text>
-            <Text style={styles.titleJob}>{item.titleJob}</Text>
+            <Text style={styles.dateJob}>{new Date(item.dataJob).toLocaleDateString()}</Text>
+            <Text style={styles.titleJob}>{item.titulo}</Text>
           </View>
 
-          <TouchableOpacity onPress={() => toggleLike(item.id)} style={styles.likeButton}>
-              <Icon name={item.liked ? "thumbs-up" : "thumbs-o-up"} size={20} color="black" />
-              <Text style={styles.likeText}>Interesse</Text>
+          <TouchableOpacity onPress={() => handleMarkInterest(item.id)} style={styles.likeButton}>
+            <Icon name={item.liked ? "thumbs-up" : "thumbs-o-up"} size={20} color="black" />
+            <Text style={styles.likeText}>Interesse</Text>
           </TouchableOpacity>
 
         </View>
 
         <View style={styles.localtionJob}>
           <IconTwo name="location-on" size={20} color="#000" />
-          <Text style={styles.localtionText}>AV. SANTOS GIUSTI 178</Text>
-          <Text style={styles.localtionProposal}>(20) PROPOSTAS</Text>
+          <Text style={styles.localtionText}>{item.local}</Text>
         </View>
 
         <View style={styles.descJob}>
           <Text style={styles.descJobText}>
-            {item.descJob}
+            {truncateText(item.descricao, 100)}
           </Text>
         </View>
 
@@ -66,6 +121,7 @@ function Jobs({ navigation }) {
           <View style={styles.containerBtnSee}>
             <Text style={styles.priceJob}>R$ {item.preco}</Text>
             <TouchableOpacity style={styles.feedItemButton} onPress={() => {
+              console.log("Selected Job:", item); // Log para verificar o item selecionado
               setSelectedJob(item);
               setModalVisible(true);
             }}>
@@ -94,7 +150,7 @@ function Jobs({ navigation }) {
                   />
                 </Svg>
             </TouchableOpacity>
-            <Text style={styles.greeting}>Olá, Carolina Santos</Text>
+            <Text style={styles.greeting}>Olá, { user.user.nome }</Text>
             
           </View>
           <TouchableOpacity onPress={() =>  navigation.navigate('TelaFotografoPage')}>
@@ -139,24 +195,24 @@ function Jobs({ navigation }) {
               <View style={styles.modalHeaderContaianer}>
                 <View>
                   <Text style={styles.modalDateTitle}>DATA DO JOB</Text>
-                  <Text style={styles.dateJob}>{selectedJob.date}</Text>
-                  <Text style={styles.modalTitle}>{selectedJob.titleJob}</Text>
+                  <Text style={styles.dateJob}>{new Date(selectedJob.dataJob).toLocaleDateString()}</Text>
+                  <Text style={styles.modalTitle}>{selectedJob.titulo}</Text>
                 </View>
 
-                <Text style={styles.localtionProposal}>(20) PROPOSTAS</Text>
+                {/* <Text style={styles.localtionProposal}>{selectedJob.status}</Text> */}
               </View>
 
                <View style={styles.perfilJobModal}>
-                <TouchableOpacity style={styles.profileButton} onPress={() => {navigation.navigate("TelaClienteFotografo"), setModalVisible(false)}}>
-                  <Text style={styles.perfilnText}>ALINE SANTOS</Text>
+                <TouchableOpacity style={styles.profileButton} onPress={() => {navigation.navigate("TelaClienteFotografo", { idCliente: selectedJob.idCliente }), setModalVisible(false)}}>
+                  <Text style={styles.perfilnText}>{selectedJob.nomeCliente}</Text>
                   <Text style={styles.profileButtonText}>VER PERFIL</Text>
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.modalDescription}>{selectedJob.descJob}</Text>
+              <Text style={styles.modalDescription}>{selectedJob.descricao}</Text>
               <View style={styles.localContainer}>
                 <Text style={styles.localTitle}>LOCAL</Text>
-                <Text style={styles.localText}>AV. PINHEIRO 2000</Text>
+                <Text style={styles.localText}>{selectedJob.local}</Text>
               </View>
 
               <View style={styles.precoContainer}>
@@ -167,7 +223,7 @@ function Jobs({ navigation }) {
 
                 <TouchableOpacity
                   style={styles.propostasBtn}
-                  onPress={() => {navigation.navigate('TelaPropostaCliente'), setModalVisible(false)}}
+                  onPress={() => {handleCreateProposta(), setModalVisible(false)}}
                 >
                   <Text style={styles.propostasBtnText}>FAZER PROPOSTA</Text>
                 </TouchableOpacity>

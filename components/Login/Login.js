@@ -2,6 +2,9 @@ import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, Modal } from 'react-native';
 import Svg, { Path, ClipPath, Rect } from 'react-native-svg';
 import styles from './LoginStyles';
+import { API_URL_MOBILE } from '@env';
+import axios from 'axios';
+import { useUser } from '../UserContext';
 
 function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -10,7 +13,44 @@ function LoginScreen({ navigation }) {
   const [modalVisibleToken, setModalVisibleToken] = useState(false);
   const [userNumbers, setUserNumbers] = useState(Array(6).fill(''));
 
+  const { login } = useUser();
+
   const inputRefs = useRef([]);
+
+  const handleLogin = async () => {
+    try {
+      const response = await axios.post(`${API_URL_MOBILE}/click/autenticacaoCliente`, {
+        email: email,
+        senha: senha
+      });
+  
+      if (response.status === 200) {
+        console.log('Login bem-sucedido:', response.data);
+        login(response.data);
+        response.data.userType === "cliente" ? 
+          navigation.navigate('TelaFeedArte') : 
+          navigation.navigate('TelaFeedJobs');
+
+          setEmail("");
+          setSenha("");
+
+      } else {
+        alert(response.data.message); 
+      }
+    } catch (error) {
+      if (error.response) {
+        console.error('Erro na resposta do servidor:', error.response.data);
+        alert(error.response.data.message);
+      } else if (error.request) {
+        console.error('Erro na requisição:', error.request);
+        alert('Erro na requisição, sem resposta do servidor.');
+      } else {
+
+        console.error('Erro:', error.message);
+        alert('Erro ao fazer a requisição.');
+      }
+    }
+  };
 
   const handleForgotPassword = () => {
     setModalVisible(true);
@@ -111,7 +151,7 @@ function LoginScreen({ navigation }) {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('TelaFeedArte')}
+        onPress={() => handleLogin()}
       >
         <Text style={styles.buttonText}>LOGIN</Text>
       </TouchableOpacity>

@@ -172,6 +172,7 @@ const styles = StyleSheet.create({
   modalDate: {
     fontSize: 16,
     marginBottom: 10,
+    marginLeft: -60
   },
   modalDescription: {
     fontSize: 14,

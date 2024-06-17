@@ -1,18 +1,41 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Modal, Alert } from 'react-native';
+import axios from 'axios';
+import { API_URL_MOBILE } from '@env';
 import styles from './TelaCreateJobStyles';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { useUser } from '../../UserContext';
 
 function CreateJob({ navigation }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
   const [location, setLocation] = useState('');
+  const [price, setPrice] = useState('');
   const [saveModalVisible, setSaveModalVisible] = useState(false);
 
-  const handleSaveJob = () => {
-    
-    setSaveModalVisible(true);
+  const { user } = useUser();
+
+  const handleSaveJob = async () => {
+    try {
+      const response = await axios.post(`${API_URL_MOBILE}/click/criarJob`, {
+        idCliente: user.user.id,
+        dataJob: date,
+        titulo: title,
+        descricao: description,
+        local: location,
+        preco: price
+      });
+
+      if (response.status === 200) {
+        setSaveModalVisible(true);
+      } else {
+        Alert.alert('Erro', 'Erro ao salvar o job');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar o job', error);
+      Alert.alert('Erro', 'Erro ao salvar o job');
+    }
   };
 
   return (
@@ -61,6 +84,15 @@ function CreateJob({ navigation }) {
           />
         </View>
 
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Preço:</Text>
+          <TextInput
+            style={styles.input}
+            value={price}
+            onChangeText={setPrice}
+          />
+        </View>
+
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.saveButton} onPress={handleSaveJob}>
             <Text style={styles.saveButtonText}>Salvar</Text>
@@ -81,7 +113,7 @@ function CreateJob({ navigation }) {
             </TouchableOpacity>
 
             <Text style={styles.modalText}>Job salvo com sucesso!</Text>
-            <TouchableOpacity onPress={() => setSaveModalVisible(false)} style={styles.modalButton}>
+            <TouchableOpacity onPress={() => {navigation.goBack(), setSaveModalVisible(false)}} style={styles.modalButton}>
               <Text style={styles.modalButtonText}>OK</Text>
             </TouchableOpacity>
           </View>

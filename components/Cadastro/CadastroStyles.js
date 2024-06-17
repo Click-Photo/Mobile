@@ -68,6 +68,38 @@ const styles = StyleSheet.create({
     left: -80,
      
   },
+
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  buttonSwicth: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    margin: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'gray',
+    width: "30%"
+  },
+  active: {
+    backgroundColor: '#fff',
+    textAlign: "center"
+    
+  },
+  inactive: {
+    borderColor: '#fff',
+    textAlign: "center"
+  },
+  activeBtn:{
+    color: "#000",
+    textAlign: "center"
+  },
+  inactiveBtn:{
+    color: "#fff",
+    textAlign: "center"
+  },
 });
 
 export default styles;
